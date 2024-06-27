@@ -63,6 +63,9 @@ type CallOptions struct {
 	UpdateEventThreatDetectionCustomModule             []gax.CallOption
 	DeleteEventThreatDetectionCustomModule             []gax.CallOption
 	ValidateEventThreatDetectionCustomModule           []gax.CallOption
+	GetSecurityCenterService                           []gax.CallOption
+	ListSecurityCenterServices                         []gax.CallOption
+	UpdateSecurityCenterService                        []gax.CallOption
 	GetLocation                                        []gax.CallOption
 	ListLocations                                      []gax.CallOption
 }
@@ -70,10 +73,13 @@ type CallOptions struct {
 func defaultGRPCClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		internaloption.WithDefaultEndpoint("securitycentermanagement.googleapis.com:443"),
+		internaloption.WithDefaultEndpointTemplate("securitycentermanagement.UNIVERSE_DOMAIN:443"),
 		internaloption.WithDefaultMTLSEndpoint("securitycentermanagement.mtls.googleapis.com:443"),
+		internaloption.WithDefaultUniverseDomain("googleapis.com"),
 		internaloption.WithDefaultAudience("https://securitycentermanagement.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
 		internaloption.EnableJwtWithScope(),
+		internaloption.EnableNewAuthLibrary(),
 		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(
 			grpc.MaxCallRecvMsgSize(math.MaxInt32))),
 	}
@@ -255,8 +261,11 @@ func defaultCallOptions() *CallOptions {
 				})
 			}),
 		},
-		GetLocation:   []gax.CallOption{},
-		ListLocations: []gax.CallOption{},
+		GetSecurityCenterService:    []gax.CallOption{},
+		ListSecurityCenterServices:  []gax.CallOption{},
+		UpdateSecurityCenterService: []gax.CallOption{},
+		GetLocation:                 []gax.CallOption{},
+		ListLocations:               []gax.CallOption{},
 	}
 }
 
@@ -424,8 +433,11 @@ func defaultRESTCallOptions() *CallOptions {
 					http.StatusGatewayTimeout)
 			}),
 		},
-		GetLocation:   []gax.CallOption{},
-		ListLocations: []gax.CallOption{},
+		GetSecurityCenterService:    []gax.CallOption{},
+		ListSecurityCenterServices:  []gax.CallOption{},
+		UpdateSecurityCenterService: []gax.CallOption{},
+		GetLocation:                 []gax.CallOption{},
+		ListLocations:               []gax.CallOption{},
 	}
 }
 
@@ -452,6 +464,9 @@ type internalClient interface {
 	UpdateEventThreatDetectionCustomModule(context.Context, *securitycentermanagementpb.UpdateEventThreatDetectionCustomModuleRequest, ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error)
 	DeleteEventThreatDetectionCustomModule(context.Context, *securitycentermanagementpb.DeleteEventThreatDetectionCustomModuleRequest, ...gax.CallOption) error
 	ValidateEventThreatDetectionCustomModule(context.Context, *securitycentermanagementpb.ValidateEventThreatDetectionCustomModuleRequest, ...gax.CallOption) (*securitycentermanagementpb.ValidateEventThreatDetectionCustomModuleResponse, error)
+	GetSecurityCenterService(context.Context, *securitycentermanagementpb.GetSecurityCenterServiceRequest, ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error)
+	ListSecurityCenterServices(context.Context, *securitycentermanagementpb.ListSecurityCenterServicesRequest, ...gax.CallOption) *SecurityCenterServiceIterator
+	UpdateSecurityCenterService(context.Context, *securitycentermanagementpb.UpdateSecurityCenterServiceRequest, ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error)
 	GetLocation(context.Context, *locationpb.GetLocationRequest, ...gax.CallOption) (*locationpb.Location, error)
 	ListLocations(context.Context, *locationpb.ListLocationsRequest, ...gax.CallOption) *LocationIterator
 }
@@ -551,15 +566,9 @@ func (c *Client) SimulateSecurityHealthAnalyticsCustomModule(ctx context.Context
 	return c.internalClient.SimulateSecurityHealthAnalyticsCustomModule(ctx, req, opts...)
 }
 
-// ListEffectiveEventThreatDetectionCustomModules returns a list of all EffectiveEventThreatDetectionCustomModules for the
+// ListEffectiveEventThreatDetectionCustomModules lists all effective Event Threat Detection custom modules for the
 // given parent. This includes resident modules defined at the scope of the
-// parent, and inherited modules, inherited from CRM ancestors (no
-// descendants). The difference between an EffectiveCustomModule and a
-// CustomModule is that the fields for an EffectiveCustomModule are computed
-// from ancestors if needed. For example, the enablement_state for a
-// CustomModule can be either ENABLED, DISABLED, or INHERITED. Where as the
-// enablement_state for an EffectiveCustomModule is always computed to ENABLED
-// or DISABLED (the effective enablement_state).
+// parent along with modules inherited from its ancestors.
 func (c *Client) ListEffectiveEventThreatDetectionCustomModules(ctx context.Context, req *securitycentermanagementpb.ListEffectiveEventThreatDetectionCustomModulesRequest, opts ...gax.CallOption) *EffectiveEventThreatDetectionCustomModuleIterator {
 	return c.internalClient.ListEffectiveEventThreatDetectionCustomModules(ctx, req, opts...)
 }
@@ -575,47 +584,45 @@ func (c *Client) GetEffectiveEventThreatDetectionCustomModule(ctx context.Contex
 	return c.internalClient.GetEffectiveEventThreatDetectionCustomModule(ctx, req, opts...)
 }
 
-// ListEventThreatDetectionCustomModules returns a list of all EventThreatDetectionCustomModules for the given
-// parent. This includes resident modules defined at the scope of the parent,
-// and inherited modules, inherited from CRM ancestors (no descendants).
+// ListEventThreatDetectionCustomModules lists all Event Threat Detection custom modules for the given
+// Resource Manager parent. This includes resident modules defined at the
+// scope of the parent along with modules inherited from ancestors.
 func (c *Client) ListEventThreatDetectionCustomModules(ctx context.Context, req *securitycentermanagementpb.ListEventThreatDetectionCustomModulesRequest, opts ...gax.CallOption) *EventThreatDetectionCustomModuleIterator {
 	return c.internalClient.ListEventThreatDetectionCustomModules(ctx, req, opts...)
 }
 
-// ListDescendantEventThreatDetectionCustomModules returns a list of all resident EventThreatDetectionCustomModules under
-// the given CRM parent and all of the parent’s CRM descendants.
+// ListDescendantEventThreatDetectionCustomModules lists all resident Event Threat Detection custom modules under the
+// given Resource Manager parent and its descendants.
 func (c *Client) ListDescendantEventThreatDetectionCustomModules(ctx context.Context, req *securitycentermanagementpb.ListDescendantEventThreatDetectionCustomModulesRequest, opts ...gax.CallOption) *EventThreatDetectionCustomModuleIterator {
 	return c.internalClient.ListDescendantEventThreatDetectionCustomModules(ctx, req, opts...)
 }
 
-// GetEventThreatDetectionCustomModule gets an ETD custom module. Retrieves the module at the given level. The
-// difference between an EffectiveCustomModule and a CustomModule is that the
-// fields for an EffectiveCustomModule are computed from ancestors if needed.
-// For example, the enablement_state for a CustomModule can be either ENABLED,
-// DISABLED, or INHERITED. Where as the enablement_state for an
-// EffectiveCustomModule is always computed to ENABLED or DISABLED (the
-// effective enablement_state).
+// GetEventThreatDetectionCustomModule gets an Event Threat Detection custom module.
 func (c *Client) GetEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.GetEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error) {
 	return c.internalClient.GetEventThreatDetectionCustomModule(ctx, req, opts...)
 }
 
-// CreateEventThreatDetectionCustomModule creates an ETD custom module at the given level. Creating a module has a
-// side-effect of creating modules at all descendants.
+// CreateEventThreatDetectionCustomModule creates a resident Event Threat Detection custom module at the scope of the
+// given Resource Manager parent, and also creates inherited custom modules
+// for all descendants of the given parent. These modules are enabled by
+// default.
 func (c *Client) CreateEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.CreateEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error) {
 	return c.internalClient.CreateEventThreatDetectionCustomModule(ctx, req, opts...)
 }
 
-// UpdateEventThreatDetectionCustomModule updates an ETD custom module at the given level. All config fields can be
-// updated when updating the module at resident level. Only enablement state
-// can be updated when updating the module at inherited levels. Updating the
-// module has a side-effect that it updates all descendants that are inherited
-// from this module.
+// UpdateEventThreatDetectionCustomModule updates the Event Threat Detection custom module with the given name based
+// on the given update mask. Updating the enablement state is supported for
+// both resident and inherited modules (though resident modules cannot have an
+// enablement state of “inherited”). Updating the display name or
+// configuration of a module is supported for resident modules only. The type
+// of a module cannot be changed.
 func (c *Client) UpdateEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.UpdateEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error) {
 	return c.internalClient.UpdateEventThreatDetectionCustomModule(ctx, req, opts...)
 }
 
-// DeleteEventThreatDetectionCustomModule deletes an ETD custom module. Deletion at resident level also deletes
-// modules at all descendants. Deletion at any other level is not supported.
+// DeleteEventThreatDetectionCustomModule deletes the specified Event Threat Detection custom module and all of its
+// descendants in the Resource Manager hierarchy. This method is only
+// supported for resident custom modules.
 func (c *Client) DeleteEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.DeleteEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) error {
 	return c.internalClient.DeleteEventThreatDetectionCustomModule(ctx, req, opts...)
 }
@@ -623,6 +630,22 @@ func (c *Client) DeleteEventThreatDetectionCustomModule(ctx context.Context, req
 // ValidateEventThreatDetectionCustomModule validates the given Event Threat Detection custom module.
 func (c *Client) ValidateEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.ValidateEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.ValidateEventThreatDetectionCustomModuleResponse, error) {
 	return c.internalClient.ValidateEventThreatDetectionCustomModule(ctx, req, opts...)
+}
+
+// GetSecurityCenterService gets service settings for the specified Security Command Center service.
+func (c *Client) GetSecurityCenterService(ctx context.Context, req *securitycentermanagementpb.GetSecurityCenterServiceRequest, opts ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error) {
+	return c.internalClient.GetSecurityCenterService(ctx, req, opts...)
+}
+
+// ListSecurityCenterServices returns a list of all Security Command Center services for the given
+// parent.
+func (c *Client) ListSecurityCenterServices(ctx context.Context, req *securitycentermanagementpb.ListSecurityCenterServicesRequest, opts ...gax.CallOption) *SecurityCenterServiceIterator {
+	return c.internalClient.ListSecurityCenterServices(ctx, req, opts...)
+}
+
+// UpdateSecurityCenterService updates a Security Command Center service using the given update mask.
+func (c *Client) UpdateSecurityCenterService(ctx context.Context, req *securitycentermanagementpb.UpdateSecurityCenterServiceRequest, opts ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error) {
+	return c.internalClient.UpdateSecurityCenterService(ctx, req, opts...)
 }
 
 // GetLocation gets information about a location.
@@ -701,7 +724,9 @@ func (c *gRPCClient) Connection() *grpc.ClientConn {
 func (c *gRPCClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
 	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "grpc", grpc.Version)
-	c.xGoogHeaders = []string{"x-goog-api-client", gax.XGoogHeader(kv...)}
+	c.xGoogHeaders = []string{
+		"x-goog-api-client", gax.XGoogHeader(kv...),
+	}
 }
 
 // Close closes the connection to the API service. The user should invoke this when
@@ -749,9 +774,12 @@ func NewRESTClient(ctx context.Context, opts ...option.ClientOption) (*Client, e
 func defaultRESTClientOptions() []option.ClientOption {
 	return []option.ClientOption{
 		internaloption.WithDefaultEndpoint("https://securitycentermanagement.googleapis.com"),
+		internaloption.WithDefaultEndpointTemplate("https://securitycentermanagement.UNIVERSE_DOMAIN"),
 		internaloption.WithDefaultMTLSEndpoint("https://securitycentermanagement.mtls.googleapis.com"),
+		internaloption.WithDefaultUniverseDomain("googleapis.com"),
 		internaloption.WithDefaultAudience("https://securitycentermanagement.googleapis.com/"),
 		internaloption.WithDefaultScopes(DefaultAuthScopes()...),
+		internaloption.EnableNewAuthLibrary(),
 	}
 }
 
@@ -761,7 +789,9 @@ func defaultRESTClientOptions() []option.ClientOption {
 func (c *restClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
 	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN")
-	c.xGoogHeaders = []string{"x-goog-api-client", gax.XGoogHeader(kv...)}
+	c.xGoogHeaders = []string{
+		"x-goog-api-client", gax.XGoogHeader(kv...),
+	}
 }
 
 // Close closes the connection to the API service. The user should invoke this when
@@ -1254,6 +1284,88 @@ func (c *gRPCClient) ValidateEventThreatDetectionCustomModule(ctx context.Contex
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
 		resp, err = c.client.ValidateEventThreatDetectionCustomModule(ctx, req, settings.GRPC...)
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *gRPCClient) GetSecurityCenterService(ctx context.Context, req *securitycentermanagementpb.GetSecurityCenterServiceRequest, opts ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error) {
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	opts = append((*c.CallOptions).GetSecurityCenterService[0:len((*c.CallOptions).GetSecurityCenterService):len((*c.CallOptions).GetSecurityCenterService)], opts...)
+	var resp *securitycentermanagementpb.SecurityCenterService
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = c.client.GetSecurityCenterService(ctx, req, settings.GRPC...)
+		return err
+	}, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+
+func (c *gRPCClient) ListSecurityCenterServices(ctx context.Context, req *securitycentermanagementpb.ListSecurityCenterServicesRequest, opts ...gax.CallOption) *SecurityCenterServiceIterator {
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "parent", url.QueryEscape(req.GetParent()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	opts = append((*c.CallOptions).ListSecurityCenterServices[0:len((*c.CallOptions).ListSecurityCenterServices):len((*c.CallOptions).ListSecurityCenterServices)], opts...)
+	it := &SecurityCenterServiceIterator{}
+	req = proto.Clone(req).(*securitycentermanagementpb.ListSecurityCenterServicesRequest)
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*securitycentermanagementpb.SecurityCenterService, string, error) {
+		resp := &securitycentermanagementpb.ListSecurityCenterServicesResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
+		if pageSize > math.MaxInt32 {
+			req.PageSize = math.MaxInt32
+		} else if pageSize != 0 {
+			req.PageSize = int32(pageSize)
+		}
+		err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+			var err error
+			resp, err = c.client.ListSecurityCenterServices(ctx, req, settings.GRPC...)
+			return err
+		}, opts...)
+		if err != nil {
+			return nil, "", err
+		}
+
+		it.Response = resp
+		return resp.GetSecurityCenterServices(), resp.GetNextPageToken(), nil
+	}
+	fetch := func(pageSize int, pageToken string) (string, error) {
+		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
+		if err != nil {
+			return "", err
+		}
+		it.items = append(it.items, items...)
+		return nextPageToken, nil
+	}
+
+	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
+	it.pageInfo.MaxSize = int(req.GetPageSize())
+	it.pageInfo.Token = req.GetPageToken()
+
+	return it
+}
+
+func (c *gRPCClient) UpdateSecurityCenterService(ctx context.Context, req *securitycentermanagementpb.UpdateSecurityCenterServiceRequest, opts ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error) {
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "security_center_service.name", url.QueryEscape(req.GetSecurityCenterService().GetName()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	ctx = gax.InsertMetadataIntoOutgoingContext(ctx, hds...)
+	opts = append((*c.CallOptions).UpdateSecurityCenterService[0:len((*c.CallOptions).UpdateSecurityCenterService):len((*c.CallOptions).UpdateSecurityCenterService)], opts...)
+	var resp *securitycentermanagementpb.SecurityCenterService
+	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		var err error
+		resp, err = c.client.UpdateSecurityCenterService(ctx, req, settings.GRPC...)
 		return err
 	}, opts...)
 	if err != nil {
@@ -1986,15 +2098,9 @@ func (c *restClient) SimulateSecurityHealthAnalyticsCustomModule(ctx context.Con
 	return resp, nil
 }
 
-// ListEffectiveEventThreatDetectionCustomModules returns a list of all EffectiveEventThreatDetectionCustomModules for the
+// ListEffectiveEventThreatDetectionCustomModules lists all effective Event Threat Detection custom modules for the
 // given parent. This includes resident modules defined at the scope of the
-// parent, and inherited modules, inherited from CRM ancestors (no
-// descendants). The difference between an EffectiveCustomModule and a
-// CustomModule is that the fields for an EffectiveCustomModule are computed
-// from ancestors if needed. For example, the enablement_state for a
-// CustomModule can be either ENABLED, DISABLED, or INHERITED. Where as the
-// enablement_state for an EffectiveCustomModule is always computed to ENABLED
-// or DISABLED (the effective enablement_state).
+// parent along with modules inherited from its ancestors.
 func (c *restClient) ListEffectiveEventThreatDetectionCustomModules(ctx context.Context, req *securitycentermanagementpb.ListEffectiveEventThreatDetectionCustomModulesRequest, opts ...gax.CallOption) *EffectiveEventThreatDetectionCustomModuleIterator {
 	it := &EffectiveEventThreatDetectionCustomModuleIterator{}
 	req = proto.Clone(req).(*securitycentermanagementpb.ListEffectiveEventThreatDetectionCustomModulesRequest)
@@ -2149,9 +2255,9 @@ func (c *restClient) GetEffectiveEventThreatDetectionCustomModule(ctx context.Co
 	return resp, nil
 }
 
-// ListEventThreatDetectionCustomModules returns a list of all EventThreatDetectionCustomModules for the given
-// parent. This includes resident modules defined at the scope of the parent,
-// and inherited modules, inherited from CRM ancestors (no descendants).
+// ListEventThreatDetectionCustomModules lists all Event Threat Detection custom modules for the given
+// Resource Manager parent. This includes resident modules defined at the
+// scope of the parent along with modules inherited from ancestors.
 func (c *restClient) ListEventThreatDetectionCustomModules(ctx context.Context, req *securitycentermanagementpb.ListEventThreatDetectionCustomModulesRequest, opts ...gax.CallOption) *EventThreatDetectionCustomModuleIterator {
 	it := &EventThreatDetectionCustomModuleIterator{}
 	req = proto.Clone(req).(*securitycentermanagementpb.ListEventThreatDetectionCustomModulesRequest)
@@ -2240,8 +2346,8 @@ func (c *restClient) ListEventThreatDetectionCustomModules(ctx context.Context, 
 	return it
 }
 
-// ListDescendantEventThreatDetectionCustomModules returns a list of all resident EventThreatDetectionCustomModules under
-// the given CRM parent and all of the parent’s CRM descendants.
+// ListDescendantEventThreatDetectionCustomModules lists all resident Event Threat Detection custom modules under the
+// given Resource Manager parent and its descendants.
 func (c *restClient) ListDescendantEventThreatDetectionCustomModules(ctx context.Context, req *securitycentermanagementpb.ListDescendantEventThreatDetectionCustomModulesRequest, opts ...gax.CallOption) *EventThreatDetectionCustomModuleIterator {
 	it := &EventThreatDetectionCustomModuleIterator{}
 	req = proto.Clone(req).(*securitycentermanagementpb.ListDescendantEventThreatDetectionCustomModulesRequest)
@@ -2330,13 +2436,7 @@ func (c *restClient) ListDescendantEventThreatDetectionCustomModules(ctx context
 	return it
 }
 
-// GetEventThreatDetectionCustomModule gets an ETD custom module. Retrieves the module at the given level. The
-// difference between an EffectiveCustomModule and a CustomModule is that the
-// fields for an EffectiveCustomModule are computed from ancestors if needed.
-// For example, the enablement_state for a CustomModule can be either ENABLED,
-// DISABLED, or INHERITED. Where as the enablement_state for an
-// EffectiveCustomModule is always computed to ENABLED or DISABLED (the
-// effective enablement_state).
+// GetEventThreatDetectionCustomModule gets an Event Threat Detection custom module.
 func (c *restClient) GetEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.GetEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error) {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -2396,8 +2496,10 @@ func (c *restClient) GetEventThreatDetectionCustomModule(ctx context.Context, re
 	return resp, nil
 }
 
-// CreateEventThreatDetectionCustomModule creates an ETD custom module at the given level. Creating a module has a
-// side-effect of creating modules at all descendants.
+// CreateEventThreatDetectionCustomModule creates a resident Event Threat Detection custom module at the scope of the
+// given Resource Manager parent, and also creates inherited custom modules
+// for all descendants of the given parent. These modules are enabled by
+// default.
 func (c *restClient) CreateEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.CreateEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error) {
 	m := protojson.MarshalOptions{AllowPartial: true, UseEnumNumbers: true}
 	body := req.GetEventThreatDetectionCustomModule()
@@ -2467,11 +2569,12 @@ func (c *restClient) CreateEventThreatDetectionCustomModule(ctx context.Context,
 	return resp, nil
 }
 
-// UpdateEventThreatDetectionCustomModule updates an ETD custom module at the given level. All config fields can be
-// updated when updating the module at resident level. Only enablement state
-// can be updated when updating the module at inherited levels. Updating the
-// module has a side-effect that it updates all descendants that are inherited
-// from this module.
+// UpdateEventThreatDetectionCustomModule updates the Event Threat Detection custom module with the given name based
+// on the given update mask. Updating the enablement state is supported for
+// both resident and inherited modules (though resident modules cannot have an
+// enablement state of “inherited”). Updating the display name or
+// configuration of a module is supported for resident modules only. The type
+// of a module cannot be changed.
 func (c *restClient) UpdateEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.UpdateEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) (*securitycentermanagementpb.EventThreatDetectionCustomModule, error) {
 	m := protojson.MarshalOptions{AllowPartial: true, UseEnumNumbers: true}
 	body := req.GetEventThreatDetectionCustomModule()
@@ -2548,8 +2651,9 @@ func (c *restClient) UpdateEventThreatDetectionCustomModule(ctx context.Context,
 	return resp, nil
 }
 
-// DeleteEventThreatDetectionCustomModule deletes an ETD custom module. Deletion at resident level also deletes
-// modules at all descendants. Deletion at any other level is not supported.
+// DeleteEventThreatDetectionCustomModule deletes the specified Event Threat Detection custom module and all of its
+// descendants in the Resource Manager hierarchy. This method is only
+// supported for resident custom modules.
 func (c *restClient) DeleteEventThreatDetectionCustomModule(ctx context.Context, req *securitycentermanagementpb.DeleteEventThreatDetectionCustomModuleRequest, opts ...gax.CallOption) error {
 	baseUrl, err := url.Parse(c.endpoint)
 	if err != nil {
@@ -2627,6 +2731,239 @@ func (c *restClient) ValidateEventThreatDetectionCustomModule(ctx context.Contex
 			baseUrl.Path = settings.Path
 		}
 		httpReq, err := http.NewRequest("POST", baseUrl.String(), bytes.NewReader(jsonReq))
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		httpRsp, err := c.httpClient.Do(httpReq)
+		if err != nil {
+			return err
+		}
+		defer httpRsp.Body.Close()
+
+		if err = googleapi.CheckResponse(httpRsp); err != nil {
+			return err
+		}
+
+		buf, err := io.ReadAll(httpRsp.Body)
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	return resp, nil
+}
+
+// GetSecurityCenterService gets service settings for the specified Security Command Center service.
+func (c *restClient) GetSecurityCenterService(ctx context.Context, req *securitycentermanagementpb.GetSecurityCenterServiceRequest, opts ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error) {
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/v1/%v", req.GetName())
+
+	params := url.Values{}
+	params.Add("$alt", "json;enum-encoding=int")
+	if req.GetShowEligibleModulesOnly() {
+		params.Add("showEligibleModulesOnly", fmt.Sprintf("%v", req.GetShowEligibleModulesOnly()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "name", url.QueryEscape(req.GetName()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).GetSecurityCenterService[0:len((*c.CallOptions).GetSecurityCenterService):len((*c.CallOptions).GetSecurityCenterService)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &securitycentermanagementpb.SecurityCenterService{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("GET", baseUrl.String(), nil)
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		httpRsp, err := c.httpClient.Do(httpReq)
+		if err != nil {
+			return err
+		}
+		defer httpRsp.Body.Close()
+
+		if err = googleapi.CheckResponse(httpRsp); err != nil {
+			return err
+		}
+
+		buf, err := io.ReadAll(httpRsp.Body)
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	return resp, nil
+}
+
+// ListSecurityCenterServices returns a list of all Security Command Center services for the given
+// parent.
+func (c *restClient) ListSecurityCenterServices(ctx context.Context, req *securitycentermanagementpb.ListSecurityCenterServicesRequest, opts ...gax.CallOption) *SecurityCenterServiceIterator {
+	it := &SecurityCenterServiceIterator{}
+	req = proto.Clone(req).(*securitycentermanagementpb.ListSecurityCenterServicesRequest)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	it.InternalFetch = func(pageSize int, pageToken string) ([]*securitycentermanagementpb.SecurityCenterService, string, error) {
+		resp := &securitycentermanagementpb.ListSecurityCenterServicesResponse{}
+		if pageToken != "" {
+			req.PageToken = pageToken
+		}
+		if pageSize > math.MaxInt32 {
+			req.PageSize = math.MaxInt32
+		} else if pageSize != 0 {
+			req.PageSize = int32(pageSize)
+		}
+		baseUrl, err := url.Parse(c.endpoint)
+		if err != nil {
+			return nil, "", err
+		}
+		baseUrl.Path += fmt.Sprintf("/v1/%v/securityCenterServices", req.GetParent())
+
+		params := url.Values{}
+		params.Add("$alt", "json;enum-encoding=int")
+		if req.GetPageSize() != 0 {
+			params.Add("pageSize", fmt.Sprintf("%v", req.GetPageSize()))
+		}
+		if req.GetPageToken() != "" {
+			params.Add("pageToken", fmt.Sprintf("%v", req.GetPageToken()))
+		}
+		if req.GetShowEligibleModulesOnly() {
+			params.Add("showEligibleModulesOnly", fmt.Sprintf("%v", req.GetShowEligibleModulesOnly()))
+		}
+
+		baseUrl.RawQuery = params.Encode()
+
+		// Build HTTP headers from client and context metadata.
+		hds := append(c.xGoogHeaders, "Content-Type", "application/json")
+		headers := gax.BuildHeaders(ctx, hds...)
+		e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+			if settings.Path != "" {
+				baseUrl.Path = settings.Path
+			}
+			httpReq, err := http.NewRequest("GET", baseUrl.String(), nil)
+			if err != nil {
+				return err
+			}
+			httpReq.Header = headers
+
+			httpRsp, err := c.httpClient.Do(httpReq)
+			if err != nil {
+				return err
+			}
+			defer httpRsp.Body.Close()
+
+			if err = googleapi.CheckResponse(httpRsp); err != nil {
+				return err
+			}
+
+			buf, err := io.ReadAll(httpRsp.Body)
+			if err != nil {
+				return err
+			}
+
+			if err := unm.Unmarshal(buf, resp); err != nil {
+				return err
+			}
+
+			return nil
+		}, opts...)
+		if e != nil {
+			return nil, "", e
+		}
+		it.Response = resp
+		return resp.GetSecurityCenterServices(), resp.GetNextPageToken(), nil
+	}
+
+	fetch := func(pageSize int, pageToken string) (string, error) {
+		items, nextPageToken, err := it.InternalFetch(pageSize, pageToken)
+		if err != nil {
+			return "", err
+		}
+		it.items = append(it.items, items...)
+		return nextPageToken, nil
+	}
+
+	it.pageInfo, it.nextFunc = iterator.NewPageInfo(fetch, it.bufLen, it.takeBuf)
+	it.pageInfo.MaxSize = int(req.GetPageSize())
+	it.pageInfo.Token = req.GetPageToken()
+
+	return it
+}
+
+// UpdateSecurityCenterService updates a Security Command Center service using the given update mask.
+func (c *restClient) UpdateSecurityCenterService(ctx context.Context, req *securitycentermanagementpb.UpdateSecurityCenterServiceRequest, opts ...gax.CallOption) (*securitycentermanagementpb.SecurityCenterService, error) {
+	m := protojson.MarshalOptions{AllowPartial: true, UseEnumNumbers: true}
+	body := req.GetSecurityCenterService()
+	jsonReq, err := m.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/v1/%v", req.GetSecurityCenterService().GetName())
+
+	params := url.Values{}
+	params.Add("$alt", "json;enum-encoding=int")
+	if req.GetUpdateMask() != nil {
+		updateMask, err := protojson.Marshal(req.GetUpdateMask())
+		if err != nil {
+			return nil, err
+		}
+		params.Add("updateMask", string(updateMask[1:len(updateMask)-1]))
+	}
+	if req.GetValidateOnly() {
+		params.Add("validateOnly", fmt.Sprintf("%v", req.GetValidateOnly()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v", "security_center_service.name", url.QueryEscape(req.GetSecurityCenterService().GetName()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).UpdateSecurityCenterService[0:len((*c.CallOptions).UpdateSecurityCenterService):len((*c.CallOptions).UpdateSecurityCenterService)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &securitycentermanagementpb.SecurityCenterService{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("PATCH", baseUrl.String(), bytes.NewReader(jsonReq))
 		if err != nil {
 			return err
 		}
